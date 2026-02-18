@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: stg_nt_table
+    description: >
+      Staging model that prepares raw NT_table data for Data Vault loading.
+      Adds hash keys, hashdiff, and audit columns (AUDIT_ID, LOAD_DTS, RECORD_SOURCE).
+    columns:
+      - name: HK_FIRM
+        description: Hash key on FIRM_ID (business key for Hub)
+        data_tests:
+          - not_null
+      - name: HD_FIRM_DETAILS
+        description: Hashdiff across all payload columns for satellite change detection
+        data_tests:
+          - not_null
+      - name: FIRM_ID
+        description: Source business key
+        data_tests:
+          - not_null
+          - unique
+      - name: LOAD_DTS
+        description: Timestamp when record was loaded
+        data_tests:
+          - not_null
+      - name: AUDIT_ID
+        description: Unique audit identifier per load event
+      - name: RECORD_SOURCE
+        description: Identifier for the source system
+
+  - name: hub_firm
+    description: >
+      Hub storing unique FIRM business keys. Insert-only - once a FIRM_ID
+      is recorded, it is never updated or deleted.
+    columns:
+      - name: HK_FIRM
+        description: Hash key (primary key)
+        data_tests:
+          - unique
+          - not_null
+      - name: FIRM_ID
+        description: Business key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: sat_firm_details
+    description: >
+      Satellite tracking changes in FIRM descriptive attributes over time.
+      New records are inserted only when payload values change (detected via hashdiff).
+    columns:
+      - name: HK_FIRM
+        description: Foreign key to hub_firm
+        data_tests:
+          - not_null
+      - name: HD_FIRM_DETAILS
+        description: Hashdiff for change detection
+        data_tests:
+          - not_null
+
+  - name: curated_firm_details
+    description: >
+      Business-ready view of current firm details. Joins Hub and Satellite,
+      applies email domain transformation (@example.com -> @ntrs.com),
+      and returns only the latest version of each firm's attributes.
+    columns:
+      - name: FIRM_ID
+        description: Business key
+        data_tests:
+          - unique
+          - not_null
+      - name: EMAIL
+        description: Email with transformed domain (@ntrs.com)
