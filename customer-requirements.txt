@@ -1,0 +1,5 @@
+1 - Ingest this file into RAW table NT_table.
+
+2- Add Audit_id and load_dts
+
+3 - load into curated layer and transform all emails fields in the file from '@example.com' to '@ntrs.com'
