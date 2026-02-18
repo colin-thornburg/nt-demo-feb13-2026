@@ -10,6 +10,14 @@
     written as plain SQL for full transparency and zero package dependencies.
 */
 
+{{
+    config(
+        materialized='table',
+        transient= false
+    )
+}}
+
+
 WITH source AS (
 
     SELECT * FROM {{ ref('NT_table') }}
